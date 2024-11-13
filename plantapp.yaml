@@ -1,0 +1,52 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: plantapp-deployment
+  labels:
+    app: plantapp
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: plantapp
+  template:
+    metadata:
+      labels:
+        app: plantapp
+    spec:
+      containers:
+      - name: plantapp
+        image: kubernetes-plantapp:latest
+        imagePullPolicy: Never
+        ports:
+        - containerPort: 8080
+        env:
+        - name: USER_NAME
+          valueFrom:
+            secretKeyRef:
+              name: mongo-secret
+              key: mongo-user
+        - name: USER_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: mongo-secret
+              key: mongo-password
+        - name: MONGO_URL
+          valueFrom:
+            configMapKeyRef:
+              name: mongo-config
+              key: mongo-url
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: plantapp-service
+spec:
+  type: NodePort
+  selector:
+    app: plantapp
+  ports:
+    - protocol: TCP
+      port: 8080
+      targetPort: 8080
+      nodePort: 30100
